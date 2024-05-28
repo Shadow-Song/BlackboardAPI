@@ -50,4 +50,3 @@ def check_password(account: str, db: pymysql.Connection) -> str:
     sql = 'SELECT * FROM Accounts WHERE account = %s'
     cursor.execute(sql, (account,))
     result = cursor.fetchall()
-

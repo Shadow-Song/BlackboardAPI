@@ -1,13 +1,7 @@
 from fastapi import FastAPI
-import Function.Account as Account
-import Function.Calendar as Calendar
-import Function.CourseList as CourseList
-import Requests.Requests as Requests
-from Model.Login import LoginRequest
-import Database.Database as Database
+from Application import Login, Models as LoginModel
 
 app = FastAPI()
-db = Database.init_database()
 
 
 @app.get('/')
@@ -25,41 +19,34 @@ async def get_query(a: str = None):
     return {'q': a}
 
 
-# Login
-@app.post('/post_login/')
-async def post_login(user: LoginRequest):
-    response = Account.login(user.account, user.password)
-    if response.code == 200:
-        if Database.add_account(
-            account=user.account,
-            password=user.password,
-            db=db
-        ):
-            return response
-        else:
-            return {'code': 400, 'msg': 'Database Disconnections'}
-    return {'code': 401, 'msg': response.msg}
-
-
-@app.get('/logout/')
-async def logout(account: str):
-    if Database.delete_account(account=account, db=db):
-        return {'code': 200, 'msg': 'Logged Out'}
-    else:
-        return {'code': 400, 'msg': 'Database Error'}
-
 @app.get('/get_calendar/')
 async def get_calendar(session_id: str):
-    response = Calendar.get_calendar(session_id)
+    response = Login.get_calendar(session_id)
     return response
 
-
-@app.get('/get_course_list/')
-async def get_course_list(user_id: str, session_id: str):
-    response = CourseList.get_course_list(user_id=user_id, s_session_id=session_id)
-    return response
 
 @app.get('/get_user_id/')
 async def get_course_list(account: str, session_id: str):
-    response = Requests.get_user_id(account=account, s_session_id=session_id)
+    response = Login.get_user_id(account=account, session_id=session_id)
+    return response
+
+
+@app.post('/post_login/')
+async def post_login(request: LoginModel.LoginRequest):
+    print('Logging in...')
+    correct = Login.check_password(request.account, request.password)
+    if correct:
+        token = Login.get_bb_token(request.account)
+        session_id = Login.get_session_id(request.account, token)
+        user_id = Login.get_user_id(request.account, session_id)
+        if user_id['code'] == 400:
+            return {'code': 401, 'msg': 'Unauthorized'}
+        return {'code': 200, 'msg': 'success', 'session_id': session_id}
+    else:
+        return {'code': 400, 'msg': 'Password Error'}
+
+
+@app.post('/user_id')
+async def get_user_id(request: LoginModel.UserIDRequest):
+    response = Login.get_user_id(request.account, request.session_id)
     return response

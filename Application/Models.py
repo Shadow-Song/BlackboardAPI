@@ -6,7 +6,6 @@ class LoginRequest(BaseModel):
     password: str = None
 
 
-class LoginResponse(BaseModel):
-    code: int
-    msg: str
-    data: dict
+class UserIDRequest(BaseModel):
+    account: str = None
+    session_id: str = None
