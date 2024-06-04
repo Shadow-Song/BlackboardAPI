@@ -1,7 +1,6 @@
 import requests
 import urllib3
-import UserID
-
+from . import UserID
 
 urllib3.disable_warnings()
 
@@ -9,7 +8,7 @@ urllib3.disable_warnings()
 def get_course_info(course_id: str, session: str):
     url = f'https://wlkc.ouc.edu.cn/learn/api/public/v1/courses/{course_id}'
     header = {
-        'xweb_xhr': 1,
+        'xweb_xhr': '1',
         'Sec-Fetch-Site': 'cross-site',
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Dest': 'empty',
@@ -17,18 +16,20 @@ def get_course_info(course_id: str, session: str):
         'Cookie': session
     }
     response = requests.get(url, headers=header, verify=False).json()
-    if response['status'] == 401:
-        return {'code': 401, 'msg': 'Unauthorized'}
-    elif response['status'] == 404:
-        return {'code': 404, 'msg': 'Course Not Found'}
+    if 'status' in response:
+        if response['status'] == 401:
+            return {'code': 401, 'msg': 'Unauthorized'}
+        elif response['status'] == 404:
+            return {'code': 404, 'msg': 'User Not Found'}
     course_name = response['name']
 
     url_2 = f'https://wlkc.ouc.edu.cn/learn/api/public/v1/courses/{course_id}/users'
     response_2 = requests.get(url_2, headers=header, verify=False).json()
-    if response_2['status'] == 401:
-        return {'code': 401, 'msg': 'Unauthorized'}
-    elif response_2['status'] == 404:
-        return {'code': 404, 'msg': 'Course Not Found'}
+    if 'status' in response:
+        if response['status'] == 401:
+            return {'code': 401, 'msg': 'Unauthorized'}
+        elif response['status'] == 404:
+            return {'code': 404, 'msg': 'User Not Found'}
     results = response_2['results']
     teacher_name = 'Unknown'
     teacher_college = 'Unknown'
@@ -41,12 +42,12 @@ def get_course_info(course_id: str, session: str):
                 teacher_college = teacher_info['college']
             break
     return {'code': 200, 'course_name': course_name, 'teacher_name': teacher_name, 'teacher_college': teacher_college}
-        
-    
+
+
 def get_course_contents(course_id: str, session: str):
     url = f'https://wlkc.ouc.edu.cn/learn/api/public/v1/courses/{course_id}/contents'
     header = {
-        'xweb_xhr': 1,
+        'xweb_xhr': '1',
         'Sec-Fetch-Site': 'cross-site',
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Dest': 'empty',
@@ -54,24 +55,26 @@ def get_course_contents(course_id: str, session: str):
         'Cookie': session
     }
     response = requests.get(url, headers=header, verify=False).json()
-    if response['status'] == 401:
-        return {'code': 401, 'msg': 'Unauthorized'}
-    elif response['status'] == 404:
-        return {'code': 404, 'msg': 'Course Not Found'}
-    
+    if 'status' in response:
+        if response['status'] == 401:
+            return {'code': 401, 'msg': 'Unauthorized'}
+        elif response['status'] == 404:
+            return {'code': 404, 'msg': 'User Not Found'}
+
     contents_list = []
     results = response['results']
     for result in results:
         if result['availability']['available'] == 'Yes':
             info = {'id': result['id'], 'title': result['title'], 'hasChildren': result['hasChildren']}
             contents_list.append(info)
-    
+
     return {'code': 200, 'contents': contents_list}
+
 
 def get_course_content_info(course_id: str, content_id: str, session: str):
     url = f'https://wlkc.ouc.edu.cn/learn/api/public/v1/courses/{course_id}/contents/{content_id}'
     header = {
-        'xweb_xhr': 1,
+        'xweb_xhr': '1',
         'Sec-Fetch-Site': 'cross-site',
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Dest': 'empty',
@@ -79,21 +82,48 @@ def get_course_content_info(course_id: str, content_id: str, session: str):
         'Cookie': session
     }
     response = requests.get(url, headers=header, verify=False).json()
-    if response['status'] == 401:
-        return {'code': 401, 'msg': 'Unauthorized'}
-    elif response['status'] == 404:
-        return {'code': 404, 'msg': 'Course Not Found'}
-    
+    if 'status' in response:
+        if response['status'] == 401:
+            return {'code': 401, 'msg': 'Unauthorized'}
+        elif response['status'] == 404:
+            return {'code': 404, 'msg': 'User Not Found'}
+
     children = []
     results = response['results']
     for result in results:
-        if result['availability']['available'] == 'Yes' and result['contentHandler']['id'] == "resource/x-bb-assignment":
+        if (result['availability']['available'] == 'Yes' and
+                result['contentHandler']['id'] == 'resource/x-bb-assignment'):
             info = {
-                'id': result['id'], 
+                'id': result['id'],
                 'parentID': result['parentId'],
-                'title': result['title'], 
-                'body': result['body'], 
+                'title': result['title'],
+                'body': result['body'],
                 'position': result['position'],
             }
             children.append(info)
+    return {'code': 200, 'children': children}
 
+
+def get_course_list(user_id: str, session: str):
+    url = f'https://wlkc.ouc.edu.cn/learn/api/public/v1/users/{user_id}/courses'
+    header = {
+        'xweb_xhr': '1',
+        'Sec-Fetch-Site': 'cross-site',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Dest': 'empty',
+        'Content-Type': 'application/json',
+        'Cookie': session
+    }
+    response = requests.get(url, headers=header, verify=False).json()
+    if 'status' in response:
+        if response['status'] == 401:
+            return {'code': 401, 'msg': 'Unauthorized'}
+        elif response['status'] == 404:
+            return {'code': 404, 'msg': 'User Not Found'}
+
+    courses = []
+    results = response['results']
+    for course in results:
+        if course['courseRoleId'] == 'Student':
+            courses.append(course['courseId'])
+    return {'code': 200, 'courses': courses}

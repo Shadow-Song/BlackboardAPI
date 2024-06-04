@@ -1,5 +1,9 @@
 from fastapi import FastAPI
-from Application import Login, Models as LoginModel
+from Account import Login
+from Blackboard import Course, UserID
+from Security import Security
+
+import Models
 
 app = FastAPI()
 
@@ -14,39 +18,27 @@ async def say_hello(name: str):
     return {'message': f'Hello {name}'}
 
 
-@app.get('/get/query/')
-async def get_query(a: str = None):
-    return {'q': a}
+@app.post('/login/')
+async def login(body: Models.LoginRequest):
+    # password_decrypted = Security.decrypt(password.encode())
+    return Login.login(username=body.username, password=body.password)
 
 
-@app.get('/get_calendar/')
-async def get_calendar(session_id: str):
-    response = Login.get_calendar(session_id)
-    return response
+@app.get('/logout/')
+async def logout(username: str):
+    return Login.logout(username=Security.decrypt(username))
 
 
 @app.get('/get_user_id/')
-async def get_course_list(account: str, session_id: str):
-    response = Login.get_user_id(account=account, session_id=session_id)
-    return response
+async def get_user_id(username: str, session: str):
+    return UserID.get_user_id(username=username, session=Security.decrypt(session))
 
 
-@app.post('/post_login/')
-async def post_login(request: LoginModel.LoginRequest):
-    print('Logging in...')
-    correct = Login.check_password(request.account, request.password)
-    if correct:
-        token = Login.get_bb_token(request.account)
-        session_id = Login.get_session_id(request.account, token)
-        user_id = Login.get_user_id(request.account, session_id)
-        if user_id['code'] == 400:
-            return {'code': 401, 'msg': 'Unauthorized'}
-        return {'code': 200, 'msg': 'success', 'session_id': session_id}
-    else:
-        return {'code': 400, 'msg': 'Password Error'}
+@app.get('/get_user_name/')
+async def get_user_name(user_id: str, session: str):
+    return UserID.get_user_name(user_id=user_id, session=Security.decrypt(session))
 
 
-@app.post('/user_id')
-async def get_user_id(request: LoginModel.UserIDRequest):
-    response = Login.get_user_id(request.account, request.session_id)
-    return response
+@app.get('/get_course_list/')
+async def get_course_list(user_id: str, session: str):
+    return Course.get_course_list(user_id=user_id, session=Security.decrypt(session))
