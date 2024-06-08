@@ -13,7 +13,7 @@ def get_user_id(username: str, session: str):
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Dest': 'empty',
         'Content-Type': 'application/json',
-        'Cookie': session
+        'Cookie': f's_session_id={session};'
     }
     response = requests.get(url, headers=header, verify=False).json()
     if 'status' in response:
@@ -36,7 +36,7 @@ def get_user_name(user_id: str, session: str):
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Dest': 'empty',
         'Content-Type': 'application/json',
-        'Cookie': session
+        'Cookie': f's_session_id={session};'
     }
     response = requests.get(url, headers=header, verify=False).json()
     if 'status' in response:

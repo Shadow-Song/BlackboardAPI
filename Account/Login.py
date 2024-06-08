@@ -34,7 +34,7 @@ def login(username, password):
         Database.update_user(username, password)
         # 返回RSA加密后的session
         session = response['data']['session']
-        print(Security.encrypt(session))
+        print(session)
         return {'code': 200, 'session': Security.encrypt(session)}
     else:
         # 返回错误信息
@@ -57,3 +57,7 @@ def refresh_session(username):
         password = user[1]
         login(username, password)
         return {'code': 200, 'session': Database.get_user(username)[2]}
+
+
+if __name__ == '__main__':
+    print(login('21020036048', 'Sj990808'))

@@ -40,7 +40,7 @@ def encrypt(message: str) -> str:
     return str_message
 
 
-# 中国海洋大学统一身份认证平台加密算法
+# 中国海洋大学统一身份认证平台加密
 def encrypt_blackboard(message: str) -> str:
     # 读取公钥
     with open('Security/pub_key.rsa', 'r') as publicfile:
